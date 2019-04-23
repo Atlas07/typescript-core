@@ -1,31 +1,25 @@
 import { sortBy } from 'lodash';
 
 import { GithubApiService } from './GitApiServise';
-import { User } from './User';
 import { Repo } from './Repo';
 
 const service = new GithubApiService();
 
-service.getUserInfo('Atlas07', (err: any, user?: User) => {
-  if (err) {
-    console.error(err);
-    return;
-  }
+if (process.argv.length < 3) {
+  console.error('Error. Provide a username as an argument');
+} else {
+  const username: string = process.argv[2];
 
-  user && service.getRepos('Atlas07', (err: any, repos?: Repo[]) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-
+  Promise.all([
+    service.getUserInfo(username),
+    service.getRepos(username),
+  ]).then(([ user, repos ]) => {
     const sortedRepos = sortBy(
       repos,
       [((repo: Repo) => repo.forkCount * -1)],
     );
 
-    user.repos = repos;
+    user.repos = sortedRepos;
     console.log(user);
-  });
-});
-
-
+  }).catch((err: any) => console.error(err));
+}
